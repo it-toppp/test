@@ -1,0 +1,43 @@
+---
+- name: 1
+  hosts: test1
+  become : yes
+  gather_facts : True
+  tasks:
+    - name: Add Epel Repository
+      yum: pkg=epel-release state=installed update_cache=true
+
+    - name: install ftp
+      yum: name={{item}} state=installed update_cache=true
+      with_items:
+        - proftpd
+#   - name: Add user to remote hosts
+#     user: name={{item }}  groups=sudo shell=/bin/nologin password=$6$KjyfytoJ$hoQdVIGcRZgje2HpHFf8ldvooLfY774SrEpHkADUf3d7uGBSwVLeMXsPIfb4l2TaXWvprMz868ZbH8HLaiDeh
+
+    - name: add group
+      group:
+        name: pro
+        state: present
+    - name: Add test users
+      user: name={{ item.name }} state=present groups={{ item.groups }} shell=/sbin/nologin createhome=no
+      with_items:
+       - { name: 'pro3', groups: 'pro'  }
+       - { name: 'pro2', groups: 'pro' }
+       - { name: 'pro1', groups: 'pro' }
+
+    - name: Create ftp directory
+      file:
+        path: "/var/proftpd/{{ item.dir }}"
+        group: "{{ item.group }}"
+        owner: "{{ item.owner }}"
+        state: directory
+      with_items:
+        - { dir: 'share', group: 'pro', owner: 'nobody' }
+        - { dir: 'share/private4pro1', group: 'pro1', owner: 'pro1' }
+        - { dir: 'share/private4pro2', group: 'pro2', owner: 'pro2' }
+        - { dir: 'share/common', group: 'pro', owner: 'nobody' }
+    
+    - name: firewall
+      comand: firewall-cmd --zone=public --add-port=2222/tcp --permanent, firewall-cmd --reload
+ssh-keygen -f /etc/ssh/sftp_host_rsa_key -N '' -t rsa
+ssh-keygen -f /etc/ssh/sftp_host_dsa_key -N '' -t dsa

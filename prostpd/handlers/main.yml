@@ -1,0 +1,7 @@
+---
+
+- name: restart proftpd
+  service:
+    name: proftpd
+    state: restarted
+  when: proftpd_service_state != 'stopped'
